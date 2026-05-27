@@ -139,3 +139,34 @@ class DeviceSimulator:
 
     def _is_anomaly(self) -> bool:
         return random.random() < self.profile["failure_rate"]
+    
+    # ── Publish helpers ───────────────────────────────────────────────────────
+
+    def _publish_telemetry(self):
+        payload = {
+            "device_id": self.device_id,
+            "device_type": self.device_type,
+            "location": self.location,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "cpu_percent": self._cpu(),
+            "ram_percent": self._ram(),
+            "temperature_c": self._temperature(),
+            "signal_dbm": self._signal(),
+            "uptime_s": self._uptime_seconds(),
+            "publish_count": self.publish_count,
+        }
+
+        # Inject an anomaly occasionally for interesting analytics
+        if self._is_anomaly():
+            payload["cpu_percent"] = round(random.uniform(88, 99), 1)
+            payload["temperature_c"] = round(random.uniform(78, 92), 2)
+            payload["anomaly"] = True
+            self.error_count += 1
+
+        self.client.publish(
+            topic=f"fleet/{self.device_id}/telemetry",
+            payload=json.dumps(payload),
+            qos=1,
+            priority=5,
+        )
+        self.publish_count += 1
