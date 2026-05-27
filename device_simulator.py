@@ -77,3 +77,32 @@ LOCATIONS = [
     "loading_bay", "outdoor_yard",
 ]
 
+class DeviceSimulator:
+    """
+    Simulates a single edge device. Publishes telemetry on a regular interval.
+    Occasionally simulates network drops to exercise the offline queue.
+    """
+
+    def __init__(self, device_id: str, device_type: str, broker_host: str, broker_port: int):
+        self.device_id = device_id
+        self.device_type = device_type
+        self.profile = DEVICE_PROFILES.get(device_type, DEVICE_PROFILES["sensor"])
+        self.location = random.choice(LOCATIONS)
+        self.boot_time = time.time()
+        self.publish_count = 0
+        self.error_count = 0
+        self._running = False
+
+        # Slow drift for realistic long-term sensor trends
+        self._drift_phase = random.uniform(0, 2 * math.pi)
+
+        self.client = ProductionMQTTClient(
+            client_id=f"fleet_{device_id}",
+            broker_host=broker_host,
+            broker_port=broker_port,
+            max_queue_size=500,
+            db_path=f"./data/{device_id}.db",
+            min_backoff=2,
+            max_backoff=30,
+            log_dir=f"./logs/{device_id}",
+        )
