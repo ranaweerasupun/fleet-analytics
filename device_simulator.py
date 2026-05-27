@@ -4,6 +4,16 @@ device_simulator.py
 Simulates a single edge IoT device publishing telemetry to the fleet broker.
 Uses robmqtt for resilient delivery — handles broker outages automatically.
 
+Topics published:
+  fleet/{device_id}/telemetry  — CPU, RAM, temperature, signal strength
+  fleet/{device_id}/status     — uptime, queue depth, connection state
+  fleet/{device_id}/events     — discrete events (boot, alert, etc.)
+
+Run one device:
+  python device_simulator.py --device-id device_001 --device-type sensor
+
+Run 15 devices at once:
+  python fleet_simulator.py --count 15
 """
 
 import json
@@ -77,6 +87,7 @@ LOCATIONS = [
     "loading_bay", "outdoor_yard",
 ]
 
+
 class DeviceSimulator:
     """
     Simulates a single edge device. Publishes telemetry on a regular interval.
@@ -107,7 +118,7 @@ class DeviceSimulator:
             log_dir=f"./logs/{device_id}",
         )
 
-        # ── Telemetry generation ─────────────────────────────────────────────────
+    # ── Telemetry generation ─────────────────────────────────────────────────
 
     def _cpu(self) -> float:
         p = self.profile
@@ -139,7 +150,7 @@ class DeviceSimulator:
 
     def _is_anomaly(self) -> bool:
         return random.random() < self.profile["failure_rate"]
-    
+
     # ── Publish helpers ───────────────────────────────────────────────────────
 
     def _publish_telemetry(self):
@@ -171,7 +182,6 @@ class DeviceSimulator:
         )
         self.publish_count += 1
 
-    
     def _publish_status(self):
         stats = self.client.get_statistics()
         payload = {
@@ -194,7 +204,23 @@ class DeviceSimulator:
             priority=8,
         )
 
-        # ── Main loop ─────────────────────────────────────────────────────────────
+    def _publish_boot_event(self):
+        payload = {
+            "device_id": self.device_id,
+            "device_type": self.device_type,
+            "location": self.location,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "event": "boot",
+            "firmware_version": "1.4.2",
+        }
+        self.client.publish(
+            topic=f"fleet/{self.device_id}/events",
+            payload=json.dumps(payload),
+            qos=2,
+            priority=10,
+        )
+
+    # ── Main loop ─────────────────────────────────────────────────────────────
 
     def run(self):
         import os
