@@ -106,3 +106,36 @@ class DeviceSimulator:
             max_backoff=30,
             log_dir=f"./logs/{device_id}",
         )
+
+        # ── Telemetry generation ─────────────────────────────────────────────────
+
+    def _cpu(self) -> float:
+        p = self.profile
+        drift = 5 * math.sin(time.time() / 300 + self._drift_phase)
+        noise = random.gauss(0, p["cpu_variance"] / 2)
+        value = p["cpu_base"] + drift + noise
+        return round(max(1.0, min(99.0, value)), 1)
+
+    def _ram(self) -> float:
+        p = self.profile
+        noise = random.gauss(0, p["ram_variance"] / 3)
+        value = p["ram_base"] + noise
+        return round(max(5.0, min(99.0, value)), 1)
+
+    def _temperature(self) -> float:
+        p = self.profile
+        drift = 3 * math.sin(time.time() / 600 + self._drift_phase)
+        noise = random.gauss(0, p["temp_variance"] / 3)
+        value = p["temp_base"] + drift + noise
+        return round(max(20.0, min(95.0, value)), 2)
+
+    def _signal(self) -> int:
+        p = self.profile
+        noise = random.randint(-p["signal_variance"], p["signal_variance"])
+        return p["signal_base"] + noise
+
+    def _uptime_seconds(self) -> int:
+        return int(time.time() - self.boot_time)
+
+    def _is_anomaly(self) -> bool:
+        return random.random() < self.profile["failure_rate"]
