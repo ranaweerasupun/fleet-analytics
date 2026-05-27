@@ -24,6 +24,7 @@ import threading
 import math
 from datetime import datetime, timezone
 from robmqtt import ProductionMQTTClient
+import os
 
 # ── Device type profiles ────────────────────────────────────────────────────
 # Each profile defines realistic operating ranges for that device type.
@@ -106,6 +107,10 @@ class DeviceSimulator:
 
         # Slow drift for realistic long-term sensor trends
         self._drift_phase = random.uniform(0, 2 * math.pi)
+
+        
+        os.makedirs("./data", exist_ok=True)
+        os.makedirs(f"./logs/{device_id}", exist_ok=True)
 
         self.client = ProductionMQTTClient(
             client_id=f"fleet_{device_id}",
@@ -223,9 +228,7 @@ class DeviceSimulator:
     # ── Main loop ─────────────────────────────────────────────────────────────
 
     def run(self):
-        import os
-        os.makedirs(f"./data", exist_ok=True)
-        os.makedirs(f"./logs/{self.device_id}", exist_ok=True)
+        
 
         self.client.connect()
         self.client.start()
