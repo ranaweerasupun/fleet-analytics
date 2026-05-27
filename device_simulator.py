@@ -170,3 +170,26 @@ class DeviceSimulator:
             priority=5,
         )
         self.publish_count += 1
+
+    
+    def _publish_status(self):
+        stats = self.client.get_statistics()
+        payload = {
+            "device_id": self.device_id,
+            "device_type": self.device_type,
+            "location": self.location,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "uptime_s": self._uptime_seconds(),
+            "publish_count": self.publish_count,
+            "error_count": self.error_count,
+            "queue_depth": stats.get("offline_queue_size", 0),
+            "inflight_count": stats.get("inflight_count", 0),
+            "is_connected": stats.get("is_connected", False),
+            "reconnect_count": stats.get("reconnect_count", 0),
+        }
+        self.client.publish(
+            topic=f"fleet/{self.device_id}/status",
+            payload=json.dumps(payload),
+            qos=1,
+            priority=8,
+        )
