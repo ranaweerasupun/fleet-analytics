@@ -193,3 +193,55 @@ class DeviceSimulator:
             qos=1,
             priority=8,
         )
+
+        # ── Main loop ─────────────────────────────────────────────────────────────
+
+    def run(self):
+        import os
+        os.makedirs(f"./data", exist_ok=True)
+        os.makedirs(f"./logs/{self.device_id}", exist_ok=True)
+
+        self.client.connect()
+        self.client.start()
+        self._publish_boot_event()
+
+        self._running = True
+        interval = self.profile["telemetry_interval"]
+        status_every = max(1, 60 // interval)  # publish status ~every 60s
+        tick = 0
+
+        print(f"[{self.device_id}] Started — type={self.device_type} location={self.location}")
+
+        try:
+            while self._running:
+                self._publish_telemetry()
+                if tick % status_every == 0:
+                    self._publish_status()
+                tick += 1
+                time.sleep(interval)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            self.client.stop()
+            print(f"[{self.device_id}] Stopped after {self.publish_count} publishes")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Simulate a single fleet edge device")
+    parser.add_argument("--device-id", default="device_001")
+    parser.add_argument("--device-type", choices=list(DEVICE_PROFILES.keys()), default="sensor")
+    parser.add_argument("--broker-host", default="localhost")
+    parser.add_argument("--broker-port", type=int, default=1883)
+    args = parser.parse_args()
+
+    sim = DeviceSimulator(
+        device_id=args.device_id,
+        device_type=args.device_type,
+        broker_host=args.broker_host,
+        broker_port=args.broker_port,
+    )
+    sim.run()
+
+
+if __name__ == "__main__":
+    main()
