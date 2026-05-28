@@ -37,6 +37,37 @@ def run_device(device_id: str, device_type: str, broker_host: str, broker_port: 
     time.sleep(random.uniform(0, 3))
     sim.run()
 
+def main():
+    parser = argparse.ArgumentParser(description="Launch a simulated fleet of edge devices")
+    parser.add_argument("--count", type=int, default=15, help="Number of devices to simulate")
+    parser.add_argument("--broker-host", default="localhost")
+    parser.add_argument("--broker-port", type=int, default=1883)
+    args = parser.parse_args()
+
+    print(f"Starting fleet of {args.count} devices → {args.broker_host}:{args.broker_port}")
+    print("Press Ctrl+C to stop all devices\n")
+
+    threads = []
+    for i in range(1, args.count + 1):
+        device_id = f"device_{i:03d}"
+        device_type = pick_type()
+        t = threading.Thread(
+            target=run_device,
+            args=(device_id, device_type, args.broker_host, args.broker_port),
+            daemon=True,
+            name=device_id,
+        )
+        threads.append(t)
+        t.start()
+
+    try:
+        while True:
+            alive = sum(1 for t in threads if t.is_alive())
+            print(f"\r[fleet] {alive}/{args.count} devices running", end="", flush=True)
+            time.sleep(5)
+    except KeyboardInterrupt:
+        print("\n\nShutting down fleet...")
+
 if __name__ == "__main__":
     main()
 
