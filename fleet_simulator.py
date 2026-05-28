@@ -31,3 +31,13 @@ def pick_type() -> str:
             return t
     return "sensor"
 
+def run_device(device_id: str, device_type: str, broker_host: str, broker_port: int):
+    sim = DeviceSimulator(device_id, device_type, broker_host, broker_port)
+    # Stagger startup by up to 3s so the broker isn't hit simultaneously
+    time.sleep(random.uniform(0, 3))
+    sim.run()
+
+if __name__ == "__main__":
+    main()
+
+
