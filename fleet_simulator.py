@@ -22,3 +22,12 @@ TYPE_WEIGHTS = {
     "controller": 0.15,
 }
 
+def pick_type() -> str:
+    r = random.random()
+    cumulative = 0.0
+    for t, w in TYPE_WEIGHTS.items():
+        cumulative += w
+        if r < cumulative:
+            return t
+    return "sensor"
+
