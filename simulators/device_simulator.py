@@ -17,6 +17,7 @@ Run 15 devices at once:
 """
 
 import json
+import os
 import time
 import random
 import argparse
@@ -24,7 +25,6 @@ import threading
 import math
 from datetime import datetime, timezone
 from robmqtt import ProductionMQTTClient
-import os
 
 # ── Device type profiles ────────────────────────────────────────────────────
 # Each profile defines realistic operating ranges for that device type.
@@ -108,7 +108,7 @@ class DeviceSimulator:
         # Slow drift for realistic long-term sensor trends
         self._drift_phase = random.uniform(0, 2 * math.pi)
 
-        
+        import os
         os.makedirs("./data", exist_ok=True)
         os.makedirs(f"./logs/{device_id}", exist_ok=True)
 
@@ -228,7 +228,6 @@ class DeviceSimulator:
     # ── Main loop ─────────────────────────────────────────────────────────────
 
     def run(self):
-        
 
         self.client.connect()
         self.client.start()

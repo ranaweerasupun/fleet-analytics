@@ -1,5 +1,12 @@
 """
 fleet_simulator.py
+------------------
+Launches multiple device simulators concurrently using threads.
+Each device runs independently with its own robmqtt client and SQLite store.
+
+Usage:
+  python fleet_simulator.py --count 15
+  python fleet_simulator.py --count 20 --broker-host 192.168.1.10
 """
 
 import argparse
@@ -22,6 +29,7 @@ TYPE_WEIGHTS = {
     "controller": 0.15,
 }
 
+
 def pick_type() -> str:
     r = random.random()
     cumulative = 0.0
@@ -31,11 +39,13 @@ def pick_type() -> str:
             return t
     return "sensor"
 
+
 def run_device(device_id: str, device_type: str, broker_host: str, broker_port: int):
     sim = DeviceSimulator(device_id, device_type, broker_host, broker_port)
     # Stagger startup by up to 3s so the broker isn't hit simultaneously
     time.sleep(random.uniform(0, 3))
     sim.run()
+
 
 def main():
     parser = argparse.ArgumentParser(description="Launch a simulated fleet of edge devices")
@@ -68,7 +78,6 @@ def main():
     except KeyboardInterrupt:
         print("\n\nShutting down fleet...")
 
+
 if __name__ == "__main__":
     main()
-
-
