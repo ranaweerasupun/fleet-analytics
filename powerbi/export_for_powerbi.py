@@ -23,3 +23,25 @@ except EnvironmentError:
     INFLUX_ORG = "fleet-org"
     INFLUX_BUCKET = "fleet-telemetry"
 
+def query(client: InfluxDBClient, flux: str) -> pd.DataFrame:
+    tables = client.query_api().query_data_frame(flux, org=INFLUX_ORG)
+    if isinstance(tables, list):
+        if not tables:
+            return pd.DataFrame()
+        df = pd.concat(tables, ignore_index=True)
+    else:
+        df = tables
+
+    drop = [c for c in df.columns if c.startswith("result") or c == "table"]
+    df = df.drop(columns=drop, errors="ignore")
+    if "_time" in df.columns:
+        df = df.rename(columns={"_time": "timestamp"})
+        df["timestamp"] = pd.to_datetime(df["timestamp"]).dt.tz_localize(None)
+    return df
+
+def main():
+    pass
+
+
+if __name__ == "__main__":
+    main()
