@@ -39,6 +39,7 @@ def query(client: InfluxDBClient, flux: str) -> pd.DataFrame:
         df["timestamp"] = pd.to_datetime(df["timestamp"]).dt.tz_localize(None)
     return df
 
+
 def export_telemetry(client: InfluxDBClient, hours: int) -> pd.DataFrame:
     print("  Exporting telemetry...")
     flux = f"""
@@ -49,14 +50,23 @@ from(bucket: "{INFLUX_BUCKET}")
            columnKey: ["_field"], valueColumn: "_value")
   |> sort(columns: ["_time"])
 """
-
     df = query(client, flux)
     if df.empty:
         return df
 
     # Clean and rename for Power BI readability
     rename = {
-        
+        "device_id":    "Device ID",
+        "device_type":  "Device Type",
+        "location":     "Location",
+        "anomaly":      "Is Anomaly",
+        "cpu_percent":  "CPU %",
+        "ram_percent":  "RAM %",
+        "temperature_c":"Temperature (°C)",
+        "signal_dbm":   "Signal (dBm)",
+        "uptime_s":     "Uptime (s)",
+        "publish_count":"Publish Count",
+        "timestamp":    "Timestamp",
     }
     df = df.rename(columns={k: v for k, v in rename.items() if k in df.columns})
 
