@@ -39,6 +39,53 @@ def query(client: InfluxDBClient, flux: str) -> pd.DataFrame:
         df["timestamp"] = pd.to_datetime(df["timestamp"]).dt.tz_localize(None)
     return df
 
+def export_telemetry(client: InfluxDBClient, hours: int) -> pd.DataFrame:
+    print("  Exporting telemetry...")
+    flux = f""" """
+
+    df = query(client, flux)
+    if df.empty:
+        return df
+
+    # Clean and rename for Power BI readability
+    rename = {
+        
+    }
+    df = df.rename(columns={k: v for k, v in rename.items() if k in df.columns})
+
+    # Derive extra columns Power BI can use for slicing
+    if "Timestamp" in df.columns:
+        df["Hour"]    = df["Timestamp"].dt.hour
+        df["Date"]    = df["Timestamp"].dt.date
+        df["Weekday"] = df["Timestamp"].dt.day_name()
+
+    if "Signal (dBm)" in df.columns:
+        df["Signal Quality"] = df["Signal (dBm)"].apply(
+            lambda x: "Excellent" if x >= -60
+            else ("Good" if x >= -70
+            else ("Fair" if x >= -80
+            else "Poor"))
+        )
+
+    if "Temperature (°C)" in df.columns:
+        df["Temp Status"] = df["Temperature (°C)"].apply(
+            lambda x: "Critical" if x >= 80
+            else ("Warning" if x >= 70
+            else "Normal")
+        )
+
+    if "CPU %" in df.columns:
+        df["CPU Status"] = df["CPU %"].apply(
+            lambda x: "Critical" if x >= 85
+            else ("High" if x >= 70
+            else "Normal")
+        )
+
+    print(f"    {len(df):,} rows, {df['Device ID'].nunique() if 'Device ID' in df.columns else '?'} devices")
+    return df
+
+
+
 def main():
     pass
 
