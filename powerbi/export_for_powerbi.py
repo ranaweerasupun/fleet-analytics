@@ -41,7 +41,14 @@ def query(client: InfluxDBClient, flux: str) -> pd.DataFrame:
 
 def export_telemetry(client: InfluxDBClient, hours: int) -> pd.DataFrame:
     print("  Exporting telemetry...")
-    flux = f""" """
+    flux = f"""
+from(bucket: "{INFLUX_BUCKET}")
+  |> range(start: -{hours}h)
+  |> filter(fn: (r) => r._measurement == "device_telemetry")
+  |> pivot(rowKey: ["_time","device_id","device_type","location","anomaly"],
+           columnKey: ["_field"], valueColumn: "_value")
+  |> sort(columns: ["_time"])
+"""
 
     df = query(client, flux)
     if df.empty:
