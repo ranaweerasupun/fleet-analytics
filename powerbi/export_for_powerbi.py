@@ -102,6 +102,41 @@ from(bucket: "{INFLUX_BUCKET}")
     return df
 
 
+def export_status(client: InfluxDBClient, hours: int) -> pd.DataFrame:
+    print("  Exporting device status...")
+    flux = f"""
+from(bucket: "{INFLUX_BUCKET}")
+  |> range(start: -{hours}h)
+  |> filter(fn: (r) => r._measurement == "device_status")
+  |> pivot(rowKey: ["_time","device_id","device_type","location"],
+           columnKey: ["_field"], valueColumn: "_value")
+  |> sort(columns: ["_time"])
+"""
+    df = query(client, flux)
+    if df.empty:
+        return df
+
+    rename = {
+        "device_id":       "Device ID",
+        "device_type":     "Device Type",
+        "location":        "Location",
+        "uptime_s":        "Uptime (s)",
+        "publish_count":   "Messages Published",
+        "error_count":     "Error Count",
+        "queue_depth":     "Queue Depth",
+        "inflight_count":  "Inflight Messages",
+        "is_connected":    "Is Connected",
+        "reconnect_count": "Reconnect Count",
+        "timestamp":       "Timestamp",
+    }
+    df = df.rename(columns={k: v for k, v in rename.items() if k in df.columns})
+
+    
+
+    print(f"    {len(df):,} rows")
+    return df
+
+
 
 def main():
     pass
