@@ -355,7 +355,43 @@ def generate_sample_data(output_dir: str):
 
 
 def main():
-    pass
+    parser = argparse.ArgumentParser(description="Export InfluxDB fleet data to Power BI CSVs")
+    parser.add_argument("--hours",  type=int, default=6)
+    parser.add_argument("--influx-url", default=INFLUX_URL)
+    parser.add_argument("--output", default="./data")
+    parser.add_argument("--sample", action="store_true",
+                        help="Generate sample data without InfluxDB")
+    args = parser.parse_args()
+
+    os.makedirs(args.output, exist_ok=True)
+
+    if args.sample:
+        generate_sample_data(args.output)
+        return
+
+    print(f"\nConnecting to InfluxDB at {args.influx_url}...")
+    client = InfluxDBClient(url=args.influx_url, token=INFLUX_TOKEN, org=INFLUX_ORG)
+
+    print(f"Exporting last {args.hours}h of data...\n")
+    telemetry = export_telemetry(client, args.hours)
+    status    = export_status(client, args.hours)
+    events    = export_events(client, args.hours)
+    summary   = build_summary(telemetry, status)
+
+    if telemetry.empty:
+        print("\nNo data in InfluxDB. Run with --sample to generate sample CSVs instead.")
+        client.close()
+        return
+
+    telemetry.to_csv(os.path.join(args.output, "telemetry.csv"), index=False)
+    status.to_csv(   os.path.join(args.output, "status.csv"),    index=False)
+    events.to_csv(   os.path.join(args.output, "events.csv"),    index=False)
+    summary.to_csv(  os.path.join(args.output, "summary.csv"),   index=False)
+
+    print(f"\nAll CSVs written to {args.output}/")
+    print("Open Power BI Desktop → Get Data → Text/CSV → import each file.")
+    client.close()
+
 
 
 if __name__ == "__main__":
