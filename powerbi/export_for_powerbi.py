@@ -171,6 +171,73 @@ from(bucket: "{INFLUX_BUCKET}")
     return df
 
 
+def build_summary(telemetry: pd.DataFrame, status: pd.DataFrame) -> pd.DataFrame:
+    """Pre-aggregate KPIs for Power BI KPI cards — one row per device."""
+    print("  Building fleet summary...")
+    if telemetry.empty:
+        return pd.DataFrame()
+
+    agg = {}
+
+    if "Device ID" in telemetry.columns:
+        group = telemetry.groupby("Device ID")
+
+        if "CPU %" in telemetry.columns:
+            agg["Avg CPU %"]  = group["CPU %"].mean().round(1)
+            agg["Max CPU %"]  = group["CPU %"].max().round(1)
+            agg["P95 CPU %"]  = group["CPU %"].quantile(0.95).round(1)
+
+        if "RAM %" in telemetry.columns:
+            agg["Avg RAM %"]  = group["RAM %"].mean().round(1)
+
+        if "Temperature (°C)" in telemetry.columns:
+            agg["Avg Temp (°C)"] = group["Temperature (°C)"].mean().round(1)
+            agg["Max Temp (°C)"] = group["Temperature (°C)"].max().round(1)
+
+        if "Signal (dBm)" in telemetry.columns:
+            agg["Avg Signal (dBm)"] = group["Signal (dBm)"].mean().round(0)
+
+        if "Is Anomaly" in telemetry.columns:
+            agg["Anomaly Count"] = group["Is Anomaly"].apply(
+                lambda x: (x == "True").sum()
+            )
+
+        summary = pd.DataFrame(agg).reset_index()
+
+        # Join device type and location from latest reading
+        if "Device Type" in telemetry.columns and "Location" in telemetry.columns:
+            latest = (
+                telemetry.sort_values("Timestamp")
+                .groupby("Device ID")[["Device Type", "Location"]]
+                .last()
+                .reset_index()
+            )
+            summary = summary.merge(latest, on="Device ID", how="left")
+
+        # Join reconnect count from status
+        if not status.empty and "Device ID" in status.columns and "Reconnect Count" in status.columns:
+            reconnects = (
+                status.groupby("Device ID")["Reconnect Count"]
+                .max()
+                .reset_index()
+            )
+            summary = summary.merge(reconnects, on="Device ID", how="left")
+
+        # Health score: simple composite (lower is better problems)
+        if "Max CPU %" in summary.columns and "Max Temp (°C)" in summary.columns:
+            summary["Health Score"] = (
+                100
+                - (summary["Max CPU %"] * 0.3)
+                - ((summary["Max Temp (°C)"] - 40) * 0.5)
+                - (summary.get("Anomaly Count", 0) * 2)
+            ).clip(0, 100).round(1)
+
+        print(f"    {len(summary)} device summaries")
+        return summary
+
+    return pd.DataFrame()
+
+
 
 
 def main():
