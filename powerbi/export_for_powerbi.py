@@ -131,7 +131,13 @@ from(bucket: "{INFLUX_BUCKET}")
     }
     df = df.rename(columns={k: v for k, v in rename.items() if k in df.columns})
 
-    
+    if "Uptime (s)" in df.columns:
+        df["Uptime (hours)"] = (df["Uptime (s)"] / 3600).round(2)
+
+    if "Is Connected" in df.columns:
+        df["Connection Status"] = df["Is Connected"].apply(
+            lambda x: "Online" if x == 1 else "Offline"
+        )
 
     print(f"    {len(df):,} rows")
     return df
