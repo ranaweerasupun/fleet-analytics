@@ -20,3 +20,12 @@ from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 from typing import Tuple
 
+class AnomalyDetector:
+   def zscore(self, threshold: float = 3.0) -> pd.DataFrame:
+      pass
+   def iqr(self, multiplier: float = 1.5) -> pd.DataFrame:
+      pass
+   def isolation_forest(self, contamination: float = 0.02) -> pd.DataFrame:
+      pass
+   
+
