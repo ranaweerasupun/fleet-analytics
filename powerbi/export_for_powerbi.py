@@ -143,6 +143,35 @@ from(bucket: "{INFLUX_BUCKET}")
     return df
 
 
+def export_events(client: InfluxDBClient, hours: int) -> pd.DataFrame:
+    print("  Exporting device events...")
+    flux = f"""
+from(bucket: "{INFLUX_BUCKET}")
+  |> range(start: -{hours}h)
+  |> filter(fn: (r) => r._measurement == "device_events")
+  |> pivot(rowKey: ["_time","device_id","device_type","location","event"],
+           columnKey: ["_field"], valueColumn: "_value")
+  |> sort(columns: ["_time"])
+"""
+    df = query(client, flux)
+    if df.empty:
+        return df
+
+    rename = {
+        "device_id":        "Device ID",
+        "device_type":      "Device Type",
+        "location":         "Location",
+        "event":            "Event Type",
+        "firmware_version": "Firmware Version",
+        "event_count":      "Event Count",
+        "timestamp":        "Timestamp",
+    }
+    df = df.rename(columns={k: v for k, v in rename.items() if k in df.columns})
+    print(f"    {len(df):,} rows")
+    return df
+
+
+
 
 def main():
     pass
