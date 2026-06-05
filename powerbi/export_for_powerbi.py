@@ -3,6 +3,16 @@ export_for_powerbi.py
 ---------------------
 Pulls fleet telemetry from InfluxDB and exports four clean CSV files
 ready for direct import into Power BI Desktop.
+
+Output files (written to ./data/):
+  telemetry.csv   — per-device sensor readings (CPU, RAM, temp, signal)
+  status.csv      — per-device operational metrics (queue, reconnects)
+  events.csv      — discrete device events (boot, alerts)
+  summary.csv     — pre-aggregated fleet KPIs for KPI cards in Power BI
+
+Run:
+  python export_for_powerbi.py
+  python export_for_powerbi.py --hours 6 --output ./data
 """
 
 import argparse
