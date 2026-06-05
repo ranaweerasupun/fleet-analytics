@@ -238,6 +238,120 @@ def build_summary(telemetry: pd.DataFrame, status: pd.DataFrame) -> pd.DataFrame
     return pd.DataFrame()
 
 
+def generate_sample_data(output_dir: str):
+    """
+    Generate realistic sample CSV files for use when InfluxDB is not running.
+    This is what you commit to GitHub so clients can download and open
+    the Power BI file without needing a live data source.
+    """
+    import numpy as np
+    import random
+
+    print("\n  Generating sample data (no InfluxDB needed)...")
+    random.seed(42)
+    np.random.seed(42)
+
+    device_types = {
+        "sensor":     {"cpu": 8,  "ram": 35, "temp": 42, "signal": -62},
+        "gateway":    {"cpu": 28, "ram": 55, "temp": 52, "signal": -55},
+        "camera":     {"cpu": 65, "ram": 70, "temp": 61, "signal": -58},
+        "controller": {"cpu": 18, "ram": 45, "temp": 48, "signal": -60},
+    }
+    locations = ["warehouse_a","warehouse_b","factory_floor_1",
+                 "factory_floor_2","office_block","server_room",
+                 "loading_bay","outdoor_yard"]
+
+    devices = []
+    for i in range(1, 16):
+        dtype = random.choices(
+            list(device_types.keys()), weights=[45,20,20,15]
+        )[0]
+        devices.append({
+            "id": f"device_{i:03d}",
+            "type": dtype,
+            "location": random.choice(locations),
+            "profile": device_types[dtype],
+        })
+
+    # Telemetry — 6 hours, one reading per device per interval
+    rows = []
+    now = datetime.now()
+    for minutes_ago in range(360, 0, -1):
+        ts = pd.Timestamp(now) - pd.Timedelta(minutes=minutes_ago)
+        for dev in devices:
+            p = dev["profile"]
+            is_anomaly = random.random() < 0.02
+            cpu = min(99, max(1, np.random.normal(p["cpu"], 5) + (30 if is_anomaly else 0)))
+            temp = min(95, max(20, np.random.normal(p["temp"], 3) + (20 if is_anomaly else 0)))
+            signal = int(p["signal"] + random.randint(-8, 8))
+            rows.append({
+                "Timestamp":       ts,
+                "Device ID":       dev["id"],
+                "Device Type":     dev["type"],
+                "Location":        dev["location"],
+                "CPU %":           round(cpu, 1),
+                "RAM %":           round(max(5, min(99, np.random.normal(p["ram"], 4))), 1),
+                "Temperature (°C)":round(temp, 2),
+                "Signal (dBm)":    signal,
+                "Uptime (s)":      minutes_ago * 60,
+                "Is Anomaly":      str(is_anomaly),
+                "Hour":            ts.hour,
+                "Date":            ts.date(),
+                "Weekday":         ts.day_name(),
+                "Signal Quality":  "Excellent" if signal>=-60 else ("Good" if signal>=-70 else ("Fair" if signal>=-80 else "Poor")),
+                "Temp Status":     "Critical" if temp>=80 else ("Warning" if temp>=70 else "Normal"),
+                "CPU Status":      "Critical" if cpu>=85 else ("High" if cpu>=70 else "Normal"),
+            })
+
+    telemetry_df = pd.DataFrame(rows)
+    telemetry_df.to_csv(os.path.join(output_dir, "telemetry.csv"), index=False)
+    print(f"    telemetry.csv — {len(telemetry_df):,} rows")
+
+    # Status
+    status_rows = []
+    for dev in devices:
+        status_rows.append({
+            "Device ID":         dev["id"],
+            "Device Type":       dev["type"],
+            "Location":          dev["location"],
+            "Uptime (s)":        random.randint(3600, 86400),
+            "Uptime (hours)":    round(random.uniform(1, 24), 2),
+            "Messages Published":random.randint(200, 2000),
+            "Error Count":       random.randint(0, 15),
+            "Queue Depth":       random.randint(0, 50),
+            "Reconnect Count":   random.randint(0, 12),
+            "Connection Status": random.choice(["Online","Online","Online","Offline"]),
+        })
+    status_df = pd.DataFrame(status_rows)
+    status_df.to_csv(os.path.join(output_dir, "status.csv"), index=False)
+    print(f"    status.csv — {len(status_df)} rows")
+
+    # Events
+    event_rows = []
+    for dev in devices:
+        event_rows.append({
+            "Device ID":       dev["id"],
+            "Device Type":     dev["type"],
+            "Location":        dev["location"],
+            "Event Type":      "boot",
+            "Firmware Version":"1.4.2",
+            "Timestamp":       pd.Timestamp(now) - pd.Timedelta(hours=6),
+        })
+        for _ in range(random.randint(0, 3)):
+            event_rows.append({
+                "Device ID":       dev["id"],
+                "Device Type":     dev["type"],
+                "Location":        dev["location"],
+                "Event Type":      random.choice(["reconnect","alert","watchdog_reset"]),
+                "Firmware Version":"1.4.2",
+                "Timestamp":       pd.Timestamp(now) - pd.Timedelta(minutes=random.randint(0,359)),
+            })
+    events_df = pd.DataFrame(event_rows)
+    events_df.to_csv(os.path.join(output_dir, "events.csv"), index=False)
+    print(f"    events.csv — {len(events_df)} rows")
+
+    print(f"\n  Sample data written to {output_dir}/")
+    print("  Use these CSVs to build the Power BI report without a live stack.\n")
 
 
 def main():
