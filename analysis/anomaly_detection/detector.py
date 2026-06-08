@@ -174,3 +174,27 @@ class AnomalyDetector:
         return result
 
 
+@staticmethod
+def summarise(df: pd.DataFrame) -> pd.DataFrame:
+   """
+   Returns a per-device summary of anomaly counts by method.
+   Useful for the insight report and Grafana annotations.
+   """
+   return (
+      df.groupby(["Device ID", "Device Type", "Location"])
+      .agg(
+         total_readings    = ("CPU %", "count"),
+         zscore_anomalies  = ("zscore_anomaly",  "sum"),
+         iqr_anomalies     = ("iqr_anomaly",     "sum"),
+         iforest_anomalies = ("iforest_anomaly", "sum"),
+         consensus_anomalies = ("consensus_anomaly", "sum"),
+         avg_cpu           = ("CPU %",            "mean"),
+         max_cpu           = ("CPU %",            "max"),
+         avg_temp          = ("Temperature (°C)", "mean"),
+         max_temp          = ("Temperature (°C)", "max"),
+      )
+      .round(1)
+      .reset_index()
+      .sort_values("consensus_anomalies", ascending=False)
+   )
+
