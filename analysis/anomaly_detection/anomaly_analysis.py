@@ -25,7 +25,13 @@ sys.path.insert(0, os.path.dirname(__file__))
 from detector import AnomalyDetector
 
 def load(data_dir: str) -> pd.DataFrame:
-        pass
+    path = os.path.join(data_dir, "telemetry.csv")
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"telemetry.csv not found at {path}")
+    df = pd.read_csv(path, parse_dates=["Timestamp"])
+    df["Is Anomaly"] = df["Is Anomaly"].astype(str).str.lower() == "true"
+    print(f"Loaded {len(df):,} rows from {df['Device ID'].nunique()} devices\n")
+    return df
 
 def print_method_comparison(summary: pd.DataFrame, n_rows: int):
         
