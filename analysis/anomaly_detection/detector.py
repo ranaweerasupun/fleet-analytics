@@ -65,7 +65,42 @@ class AnomalyDetector:
       return pd.concat(results).sort_index()
    
    def iqr(self, multiplier: float = 1.5) -> pd.DataFrame:
-      pass
+      results = []
+
+      for device_id, group in self.df.groupby("Device ID"):
+         group = group.copy()
+         flags = pd.DataFrame(index=group.index)
+
+         for feature in self.FEATURES:
+            col = group[feature].dropna()
+            if len(col) < 10:
+               flags[f"iqr_{feature}"] = False
+               continue
+
+            q1  = col.quantile(0.25)
+            q3  = col.quantile(0.75)
+            iqr = q3 - q1
+            lo  = q1 - multiplier * iqr
+            hi  = q3 + multiplier * iqr
+
+            flags[f"iqr_{feature}"] = (col < lo) | (col > hi)
+
+            # Store bounds for explainability
+            group[f"iqr_lo_{feature}"] = lo
+            group[f"iqr_hi_{feature}"] = hi
+
+         group["iqr_anomaly"] = flags.any(axis=1)
+         group["iqr_trigger"] = flags.idxmax(axis=1).str.replace("iqr_", "")
+         group["iqr_trigger"] = group["iqr_trigger"].where(
+            group["iqr_anomaly"], other=""
+         )
+         results.append(group)
+
+      return pd.concat(results).sort_index()
+
+
+
+
    def isolation_forest(self, contamination: float = 0.02) -> pd.DataFrame:
       pass
    
