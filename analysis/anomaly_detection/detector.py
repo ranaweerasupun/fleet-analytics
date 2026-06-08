@@ -36,7 +36,34 @@ class AnomalyDetector:
          raise ValueError("DataFrame must have a 'Device ID' column")
 
    def zscore(self, threshold: float = 3.0) -> pd.DataFrame:
-      pass
+
+      results = []
+
+      for device_id, group in self.df.groupby("Device ID"):
+            group = group.copy()
+            z_scores = pd.DataFrame(index=group.index)
+
+            for feature in self.FEATURES:
+                col = group[feature].dropna()
+                if len(col) < 10:
+                    z_scores[f"z_{feature}"] = 0.0
+                    continue
+                z = np.abs(stats.zscore(col, nan_policy="omit"))
+                z_scores[f"z_{feature}"] = pd.Series(z, index=col.index)
+
+            # Max Z across all features per row
+            group["max_zscore"] = z_scores.max(axis=1)
+            group["zscore_anomaly"] = group["max_zscore"] > threshold
+
+            # Which feature triggered the flag
+            group["zscore_trigger"] = z_scores.idxmax(axis=1).str.replace("z_", "")
+            group["zscore_trigger"] = group["zscore_trigger"].where(
+                group["zscore_anomaly"], other=""
+            )
+            results.append(group)
+
+      return pd.concat(results).sort_index()
+   
    def iqr(self, multiplier: float = 1.5) -> pd.DataFrame:
       pass
    def isolation_forest(self, contamination: float = 0.02) -> pd.DataFrame:
