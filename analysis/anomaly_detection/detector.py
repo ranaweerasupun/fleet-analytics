@@ -102,6 +102,44 @@ class AnomalyDetector:
 
 
    def isolation_forest(self, contamination: float = 0.02) -> pd.DataFrame:
-      pass
+
+      results = []
+      scaler = StandardScaler()
+
+      for device_id, group in self.df.groupby("Device ID"):
+         group = group.copy()
+         feature_data = group[self.FEATURES].dropna()
+
+         if len(feature_data) < 20:
+            group["iforest_anomaly"] = False
+            group["iforest_score"] = 0.0
+            results.append(group)
+            continue
+
+         # Scale features so no single dimension dominates
+         X = scaler.fit_transform(feature_data)
+
+         model = IsolationForest(
+            contamination=contamination,
+            random_state=42,
+            n_estimators=100,
+         )
+         preds  = model.fit_predict(X)
+         scores = model.score_samples(X)
+
+         # -1 = anomaly, 1 = normal (sklearn convention)
+         group.loc[feature_data.index, "iforest_anomaly"] = preds == -1
+         group.loc[feature_data.index, "iforest_score"]   = scores
+
+         # Anomaly score: invert so higher = more anomalous
+         group["iforest_score"] = -group["iforest_score"]
+         group["iforest_anomaly"] = group["iforest_anomaly"].fillna(False)
+
+         results.append(group)
+
+      return pd.concat(results).sort_index()
+   
+
+   
    
 
