@@ -21,6 +21,20 @@ from sklearn.preprocessing import StandardScaler
 from typing import Tuple
 
 class AnomalyDetector:
+
+   FEATURES = ["CPU %", "RAM %", "Temperature (°C)", "Signal (dBm)"]
+
+   def __init__(self, df: pd.DataFrame):
+      self.data = df.copy()
+      self._validate()
+
+   def _validate(self):
+      missing = [f for f in self.FEATURES if f not in self.df.columns]
+      if missing:
+         raise ValueError(f"Missing columns: {missing}")
+      if "Device ID" not in self.df.columns:
+         raise ValueError("DataFrame must have a 'Device ID' column")
+
    def zscore(self, threshold: float = 3.0) -> pd.DataFrame:
       pass
    def iqr(self, multiplier: float = 1.5) -> pd.DataFrame:
