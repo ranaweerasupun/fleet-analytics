@@ -140,6 +140,37 @@ class AnomalyDetector:
       return pd.concat(results).sort_index()
    
 
-   
-   
+   def run_all(self) -> pd.DataFrame:
+        """
+        Run all three methods and return a single DataFrame with all flags.
+        Also adds a 'consensus_anomaly' column — True if 2+ methods agree.
+        Agreement across methods gives higher confidence than any single method alone.
+        """
+        print("Running Z-score detection...")
+        df_z = self.zscore()
+
+        print("Running IQR detection...")
+        df_iqr = self.iqr()
+
+        print("Running Isolation Forest...")
+        df_if = self.isolation_forest()
+
+        # Merge results — all three ran on same df so index aligns
+        result = df_z.copy()
+        result["iqr_anomaly"]     = df_iqr["iqr_anomaly"]
+        result["iqr_trigger"]     = df_iqr["iqr_trigger"]
+        result["iforest_anomaly"] = df_if["iforest_anomaly"]
+        result["iforest_score"]   = df_if["iforest_score"]
+
+        # Consensus: flagged by at least 2 of 3 methods
+        result["method_count"] = (
+            result["zscore_anomaly"].astype(int) +
+            result["iqr_anomaly"].astype(int) +
+            result["iforest_anomaly"].astype(int)
+        )
+        result["consensus_anomaly"] = result["method_count"] >= 2
+
+        print("Done.\n")
+        return result
+
 
