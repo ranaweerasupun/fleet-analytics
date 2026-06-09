@@ -109,6 +109,39 @@ def make_charts(result: pd.DataFrame, summary: pd.DataFrame, output_dir: str):
     top_device = summary.iloc[0]["Device ID"] if not summary.empty else result["Device ID"].iloc[0]
     dev_data   = result[result["Device ID"] == top_device].sort_values("Timestamp") if "Timestamp" in result.columns else result[result["Device ID"] == top_device]
 
+    # ── Panel 1: CPU time series with anomaly overlays ─────────────────────
+    ax1 = fig.add_subplot(gs[0, :])
+    ax1.set_title(f"CPU % over time — {top_device}  (all three methods shown)", fontsize=11)
+
+    if "Timestamp" in dev_data.columns and "CPU %" in dev_data.columns:
+        ax1.plot(dev_data["Timestamp"], dev_data["CPU %"],
+                 color=GRAY, linewidth=0.8, alpha=0.7, label="CPU %", zorder=1)
+
+        # Layer each method's flags
+        for col, color, label, marker in [
+            ("zscore_anomaly",  TEAL,   "Z-score",          "o"),
+            ("iqr_anomaly",     AMBER,  "IQR",              "s"),
+            ("iforest_anomaly", CORAL,  "Isolation Forest", "^"),
+        ]:
+            if col in dev_data.columns:
+                flagged = dev_data[dev_data[col] == True]
+                if not flagged.empty:
+                    ax1.scatter(flagged["Timestamp"], flagged["CPU %"],
+                                color=color, s=40, zorder=3, label=label,
+                                marker=marker, alpha=0.85)
+
+        # Consensus in bold
+        if "consensus_anomaly" in dev_data.columns:
+            consensus_pts = dev_data[dev_data["consensus_anomaly"] == True]
+            if not consensus_pts.empty:
+                ax1.scatter(consensus_pts["Timestamp"], consensus_pts["CPU %"],
+                            color="black", s=120, zorder=4, marker="*",
+                            label="Consensus (2/3 methods)", alpha=0.9)
+
+        ax1.set_ylabel("CPU %")
+        ax1.legend(loc="upper right", fontsize=8)
+        ax1.tick_params(axis="x", rotation=30)
+
 def main():
         pass
 
