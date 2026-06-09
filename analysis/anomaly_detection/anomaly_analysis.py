@@ -156,6 +156,22 @@ def make_charts(result: pd.DataFrame, summary: pd.DataFrame, output_dir: str):
         ax2.set_ylabel("Anomaly count")
         ax2.legend(fontsize=8)
 
+    # —— Panel 3: Method agreement heatmap  —──────────────────────────────
+    ax3 = fig.add_subplot(gs[1, 1])
+    ax3.set_title("Method agreement per device", fontsize=11)
+    if not summary.empty:   
+        heat_data = summary[["zscore_anomalies","iqr_anomalies","iforest_anomalies"]].astype(float).values
+        # Normalise by total readings for fair comparison
+        totals = summary["total_readings"].astype(float).values[:, None]
+        heat_norm = (heat_data / totals * 100).T.astype(float)
+
+        im = ax3.imshow(heat_norm, aspect="auto", cmap="YlOrRd", vmin=0, vmax=5)
+        ax3.set_yticks([0,1,2])
+        ax3.set_yticklabels(["Z-score","IQR","IForest"], fontsize=9)
+        ax3.set_xticks(range(len(summary)))
+        ax3.set_xticklabels(summary["Device ID"], rotation=45, ha="right", fontsize=7)
+        plt.colorbar(im, ax=ax3, label="Anomaly rate (%)")
+
 def main():
         pass
 
