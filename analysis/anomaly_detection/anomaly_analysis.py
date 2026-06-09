@@ -65,7 +65,27 @@ def print_method_comparison(summary: pd.DataFrame, n_rows: int):
     print()
 
 def print_method_explanation():
-        pass
+    print("  METHOD GUIDE — when to use each one")
+    print("  " + "-" * 68)
+    methods = [
+        ("Z-score",
+         "Good for normally distributed sensor data (e.g. temperature).",
+         "Sensitive — picks up small deviations. Can overfire on skewed data."),
+        ("IQR",
+         "Good for skewed or heavy-tailed data (e.g. CPU spikes).",
+         "Robust — not thrown off by extreme values. Misses subtle drift."),
+        ("Isolation Forest",
+         "Good for catching multivariate anomalies — when the combination",
+         "of features is unusual, not any single metric alone. Black-box."),
+        ("Consensus (2/3)",
+         "Use when you need high confidence. Only flags what multiple methods",
+         "agree on. Fewer false positives — best for alerting a human."),
+    ]
+    for name, line1, line2 in methods:
+        print(f"\n  {name}")
+        print(f"    + {line1}")
+        print(f"      {line2}")
+    print()
 
 def print_top_anomalies(result: pd.DataFrame):
         pass
