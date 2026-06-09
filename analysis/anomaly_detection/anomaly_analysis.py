@@ -142,6 +142,20 @@ def make_charts(result: pd.DataFrame, summary: pd.DataFrame, output_dir: str):
         ax1.legend(loc="upper right", fontsize=8)
         ax1.tick_params(axis="x", rotation=30)
 
+    # ── Panel 2: Anomaly count by device (bar chart) ──────────────────────
+    ax2 = fig.add_subplot(gs[1, 0])
+    ax2.set_title("Anomaly counts by device", fontsize=11)
+    if not summary.empty:
+        x  = range(len(summary))
+        w  = 0.22
+        ax2.bar([i - w for i in x], summary["zscore_anomalies"],  width=w, label="Z-score",  color=TEAL,   alpha=0.8)
+        ax2.bar([i     for i in x], summary["iqr_anomalies"],     width=w, label="IQR",      color=AMBER,  alpha=0.8)
+        ax2.bar([i + w for i in x], summary["iforest_anomalies"], width=w, label="IForest",  color=CORAL,  alpha=0.8)
+        ax2.set_xticks(list(x))
+        ax2.set_xticklabels(summary["Device ID"], rotation=45, ha="right", fontsize=7)
+        ax2.set_ylabel("Anomaly count")
+        ax2.legend(fontsize=8)
+
 def main():
         pass
 
