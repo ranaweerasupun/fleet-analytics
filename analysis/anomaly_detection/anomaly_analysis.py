@@ -91,7 +91,23 @@ def print_top_anomalies(result: pd.DataFrame):
         pass
 
 def make_charts(result: pd.DataFrame, summary: pd.DataFrame, output_dir: str):
-        pass
+    os.makedirs(output_dir, exist_ok=True)
+    plt.style.use("seaborn-v0_8-whitegrid")
+
+    fig = plt.figure(figsize=(18, 14))
+    fig.suptitle("IoT Fleet — Statistical Anomaly Detection Comparison",
+                 fontsize=15, fontweight="bold", y=0.98)
+    gs = gridspec.GridSpec(3, 3, figure=fig, hspace=0.50, wspace=0.35)
+
+    TEAL   = "#1D9E75"
+    PURPLE = "#7F77DD"
+    CORAL  = "#D85A30"
+    AMBER  = "#BA7517"
+    GRAY   = "#888780"
+
+    # Pick one representative device (highest consensus anomalies)
+    top_device = summary.iloc[0]["Device ID"] if not summary.empty else result["Device ID"].iloc[0]
+    dev_data   = result[result["Device ID"] == top_device].sort_values("Timestamp") if "Timestamp" in result.columns else result[result["Device ID"] == top_device]
 
 def main():
         pass
