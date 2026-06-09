@@ -34,8 +34,35 @@ def load(data_dir: str) -> pd.DataFrame:
     return df
 
 def print_method_comparison(summary: pd.DataFrame, n_rows: int):
-        
-        pass
+    print("═" * 72)
+    print("  ANOMALY DETECTION — METHOD COMPARISON")
+    print("═" * 72)
+    print(f"  {'Device ID':<14} {'Type':<12} {'Location':<18} "
+          f"{'Z-score':>8} {'IQR':>6} {'IForest':>8} {'Consensus':>10}")
+    print("  " + "-" * 68)
+    for _, row in summary.head(12).iterrows():
+        print(
+            f"  {row['Device ID']:<14} {row['Device Type']:<12} "
+            f"{row['Location']:<18} "
+            f"{int(row['zscore_anomalies']):>8} "
+            f"{int(row['iqr_anomalies']):>6} "
+            f"{int(row['iforest_anomalies']):>8} "
+            f"{int(row['consensus_anomalies']):>10}"
+        )
+    print("═" * 72)
+
+    # Rates
+    z_rate  = summary["zscore_anomalies"].sum()  / summary["total_readings"].sum() * 100
+    iq_rate = summary["iqr_anomalies"].sum()     / summary["total_readings"].sum() * 100
+    if_rate = summary["iforest_anomalies"].sum() / summary["total_readings"].sum() * 100
+    cs_rate = summary["consensus_anomalies"].sum()/ summary["total_readings"].sum()* 100
+
+    print(f"\n  Fleet-wide anomaly rates:")
+    print(f"    Z-score:          {z_rate:.2f}% of readings")
+    print(f"    IQR:              {iq_rate:.2f}% of readings")
+    print(f"    Isolation Forest: {if_rate:.2f}% of readings")
+    print(f"    Consensus (2/3):  {cs_rate:.2f}% of readings  ← highest confidence")
+    print()
 
 def print_method_explanation():
         pass
