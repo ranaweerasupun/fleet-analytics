@@ -2,9 +2,8 @@
 generate_insight_report.py
 --------------------------
 Reads the fleet CSVs (real or sample) and generates a professional
-one-page PDF insight narrative — the kind of document you hand to a client.
+one-page PDF insight narrative — the kind of document a client expects.
 
-This is what separates a data analyst from a dashboard builder.
 The charts show what happened. This report explains what it means
 and what to do about it.
 
