@@ -100,6 +100,55 @@ def analyse(tel: pd.DataFrame, sta: pd.DataFrame) -> dict:
     # Reliable devices
     reliable = sta[(sta["Reconnect Count"] <= 2) & (sta["Connection Status"] == "Online")]
 
+    # ── Facts that were previously hardcoded in build_pdf — computed here ──────
+
+    # Anomalies by device type (Exec summary claimed "all cameras"; really sensors lead)
+    anom_by_type = tel[tel["Is Anomaly"]]["Device Type"].value_counts()
+    if len(anom_by_type):
+        anom_top_type  = anom_by_type.index[0]
+        anom_top_count = int(anom_by_type.iloc[0])
+    else:
+        anom_top_type, anom_top_count = "none", 0
+
+    # Camera fleet size + share of critical-CPU events that are cameras
+    camera_count = cameras["Device ID"].nunique()
+    crit = tel[tel["CPU Status"] == "Critical"]
+    cam_crit_cpu_pct = int(round(100 * (crit["Device Type"] == "camera").mean())) if len(crit) else 0
+
+    # Per-device camera CPU means (replaces the fudged "~65%" table cells)
+    cam_cpu_by_device = cameras.groupby("Device ID")["CPU %"].mean().round(1).to_dict()
+
+    # Most stable device (Finding 4 hardcoded device_014; derive from reliable)
+    if not reliable.empty:
+        stable_device = reliable.sort_values("Reconnect Count").iloc[0]
+    else:
+        stable_device = sta.sort_values("Reconnect Count").iloc[0]
+
+    # Offline devices nearest queue capacity (Finding 3 hardcoded device_004/_009)
+    near_cap = offline_devices.sort_values("Queue Depth", ascending=False).head(2)
+    if not near_cap.empty:
+        near_capacity_text = " and ".join(
+            f"{r['Device ID']} ({r['Location']}, {int(r['Queue Depth'])} messages queued)"
+            for _, r in near_cap.iterrows()
+        )
+        near_capacity_ids   = " and ".join(near_cap["Device ID"].tolist())
+        near_capacity_queue = int(near_cap["Queue Depth"].sum())
+    else:
+        near_capacity_text, near_capacity_ids, near_capacity_queue = "none", "none", 0
+
+    # Hottest camera locations + top camera IDs by peak temp (Finding 1 actions)
+    cam_peaks = (
+        cameras[cameras["Temp Status"].isin(["Warning", "Critical"])]
+        if "Temp Status" in cameras.columns else cameras
+    )
+    cam_loc_peak = (
+        cam_peaks.groupby("Location")["Temperature (°C)"].max().sort_values(ascending=False)
+        if not cam_peaks.empty else cameras.groupby("Location")["Temperature (°C)"].max().sort_values(ascending=False)
+    )
+    cam_hot_locs = " and ".join(cam_loc_peak.index[:2].tolist()) if len(cam_loc_peak) else "the camera zones"
+    cam_dev_peak = cameras.groupby("Device ID")["Temperature (°C)"].max().sort_values(ascending=False)
+    cam_top_ids  = " and ".join(cam_dev_peak.index[:2].tolist()) if len(cam_dev_peak) else "the hottest cameras"
+
     return dict(
         fleet_size=fleet_size,
         offline_count=offline_count,
@@ -121,6 +170,17 @@ def analyse(tel: pd.DataFrame, sta: pd.DataFrame) -> dict:
         most_queued=most_queued,
         high_reconnect=high_reconnect,
         reliable=reliable,
+        anom_top_type=anom_top_type,
+        anom_top_count=anom_top_count,
+        camera_count=camera_count,
+        cam_crit_cpu_pct=cam_crit_cpu_pct,
+        cam_cpu_by_device=cam_cpu_by_device,
+        stable_device=stable_device,
+        near_capacity_text=near_capacity_text,
+        near_capacity_ids=near_capacity_ids,
+        near_capacity_queue=near_capacity_queue,
+        cam_hot_locs=cam_hot_locs,
+        cam_top_ids=cam_top_ids,
         report_date=datetime.now().strftime("%d %B %Y"),
         report_time=datetime.now().strftime("%H:%M"),
     )
@@ -220,7 +280,9 @@ def build_pdf(d: dict, output_path: str):
         f"A total of <b>{d['total_reconnects']} reconnection events</b> were recorded across the fleet, "
         f"pointing to intermittent network instability that warrants investigation. "
         f"<b>{d['anomaly_count']} anomaly events</b> were detected, representing a fleet-wide anomaly rate of "
-        f"<b>{d['anomaly_rate']}%</b>. All anomalies were isolated to the camera device class."
+        f"<b>{d['anomaly_rate']}%</b>. The highest share of anomalies came from the "
+        f"<b>{d['anom_top_type']}</b> device class "
+        f"(<b>{d['anom_top_count']}</b> of {d['anomaly_count']} events)."
     )
     story.append(Paragraph(summary_text, S["body"]))
     story.append(Spacer(1, 4))
@@ -230,11 +292,11 @@ def build_pdf(d: dict, output_path: str):
     story.append(KeepTogether([
         Paragraph("Finding 1 — Camera devices are operating at thermal risk", S["h2"]),
         Paragraph(
-            f"All <b>5 camera devices</b> are running at a sustained average CPU load of "
+            f"All <b>{d['camera_count']} camera devices</b> are running at a sustained average CPU load of "
             f"<b>{d['cam_cpu']}%</b> and average temperature of <b>{d['cam_temp']}°C</b>. "
             f"Peak temperatures across the camera fleet have reached <b>{d['cam_temp_max']}°C</b>, "
             f"which approaches the operating threshold for the embedded processor. "
-            f"Camera devices account for <b>100% of critical CPU events</b> recorded during this period.",
+            f"Camera devices account for <b>{d['cam_crit_cpu_pct']}% of critical CPU events</b> recorded during this period.",
             S["body"]
         ),
         Spacer(1, 4),
@@ -244,10 +306,12 @@ def build_pdf(d: dict, output_path: str):
     cam_rows = [["Device ID", "Location", "Avg CPU %", "Peak Temp (°C)", "Status"]]
     top_cam = d["temp_peaks"].reset_index().head(5)
     for _, row in top_cam.iterrows():
+        dev_cpu = d["cam_cpu_by_device"].get(row["Device ID"])
+        cpu_cell = f"{dev_cpu:.1f}%" if dev_cpu is not None else "—"
         cam_rows.append([
             row["Device ID"],
             row["Location"],
-            "~65%",
+            cpu_cell,
             f"{row['Temperature (°C)']:.1f}°C",
             "⚠ Monitor",
         ])
@@ -271,10 +335,10 @@ def build_pdf(d: dict, output_path: str):
 
     story.append(Paragraph("<b>Recommended action:</b>", S["h3"]))
     for action in [
-        "Inspect physical ventilation around camera enclosures, particularly at factory_floor_2 and server_room where peak temperatures exceeded 86°C.",
-        "Review the video processing workload — sustained 65% CPU on embedded hardware leaves minimal headroom for thermal spikes.",
+        f"Inspect physical ventilation around camera enclosures, particularly at {d['cam_hot_locs']} where peak temperatures reached {d['cam_temp_max']}°C.",
+        f"Review the video processing workload — sustained ~{d['cam_cpu']}% CPU on embedded hardware leaves minimal headroom for thermal spikes.",
         "Consider firmware-level CPU throttling during peak temperature events as a short-term protective measure.",
-        "Schedule preventive maintenance inspection of camera units device_002 and device_012 within 7 days.",
+        f"Schedule preventive maintenance inspection of camera units {d['cam_top_ids']} within 7 days.",
     ]:
         story.append(Paragraph(f"→ {action}", S["action"]))
     story.append(Spacer(1, 4))
@@ -285,7 +349,7 @@ def build_pdf(d: dict, output_path: str):
         Paragraph("Finding 2 — Chronic connectivity failures in two network zones", S["h2"]),
         Paragraph(
             f"<b>{d['offline_count']} of {d['fleet_size']} devices ({round(d['offline_count']/d['fleet_size']*100)}%) are currently offline</b>. "
-            f"Six devices recorded more than 8 reconnection events during the analysis window — a pattern "
+            f"<b>{len(d['high_reconnect'])} devices</b> recorded more than 8 reconnection events during the analysis window — a pattern "
             f"inconsistent with isolated device faults and strongly suggestive of infrastructure-level "
             f"network instability. <b>{wd['Device ID']}</b> ({wd['Device Type']}, {wd['Location']}) "
             f"is the most severely affected, with <b>{int(wd['Reconnect Count'])} reconnections</b> and "
@@ -312,15 +376,15 @@ def build_pdf(d: dict, output_path: str):
     # Use raw high_reconnect df merged with status
     story.append(Paragraph(
         f"Devices with >8 reconnections: <b>{', '.join(d['high_reconnect']['Device ID'].tolist())}</b>. "
-        f"Locations affected: <b>factory_floor_2, warehouse_b, loading_bay, server_room</b>.",
+        f"Locations affected: <b>{', '.join(sorted(d['high_reconnect']['Location'].unique()))}</b>.",
         S["body"]
     ))
     story.append(Spacer(1, 4))
 
     story.append(Paragraph("<b>Recommended action:</b>", S["h3"]))
     for action in [
-        f"Audit the wireless access points serving factory_floor_2 and warehouse_b — these locations account for the majority of reconnection events.",
-        f"device_002 (camera, factory_floor_2) has {int(wd['Reconnect Count'])} reconnections and a queue of {int(wd['Queue Depth'])} messages — prioritise restoring its connection first.",
+        f"Audit the wireless access points serving {', '.join(sorted(d['high_reconnect']['Location'].unique())[:2])} — these locations account for many of the reconnection events.",
+        f"<b>{wd['Device ID']}</b> ({wd['Device Type']}, {wd['Location']}) has {int(wd['Reconnect Count'])} reconnections and a queue of {int(wd['Queue Depth'])} messages — prioritise restoring its connection first.",
         "Review DHCP lease times and AP roaming configuration for the affected network zones.",
         "Consider wired Ethernet fallback for gateway devices in high-reconnect locations.",
     ]:
@@ -335,8 +399,8 @@ def build_pdf(d: dict, output_path: str):
             f"The fleet's resilient MQTT client preserved <b>{d['total_queued']} messages</b> across "
             f"offline device queues during this period. This confirms the edge-first architecture is "
             f"working as designed — data is not silently dropped when the broker is unreachable. "
-            f"However, <b>two devices are approaching their queue capacity limit</b>: "
-            f"device_004 (warehouse_b, 50 messages queued) and device_009 (office_block, 49 messages queued). "
+            f"However, <b>the devices closest to queue capacity</b> are: "
+            f"{d['near_capacity_text']}. "
             f"If these devices remain offline and the queue fills, <b>lower-priority messages will begin "
             f"to be evicted</b> in favour of high-priority alerts.",
             S["body"]
@@ -346,7 +410,7 @@ def build_pdf(d: dict, output_path: str):
 
     story.append(Paragraph("<b>Recommended action:</b>", S["h3"]))
     for action in [
-        "Restore connectivity to device_004 and device_009 within the next 2 hours to prevent queue overflow.",
+        f"Restore connectivity to {d['near_capacity_ids']} within the next 2 hours to prevent queue overflow.",
         "Consider increasing max_queue_size from 500 to 1000 for camera and sensor devices in known problem zones.",
         "Review queue eviction policy — confirm that alert-class messages (priority 8–10) are protected.",
     ]:
@@ -356,14 +420,16 @@ def build_pdf(d: dict, output_path: str):
     # ── Finding 4: Reliable devices ───────────────────────────────────────────
     story.append(HRFlowable(width="100%", thickness=0.5, color=HexColor("#D3D1C7"), spaceAfter=6))
     story.append(KeepTogether([
-        Paragraph("Finding 4 — Controller and office sensor are the fleet's most stable devices", S["h2"]),
+        Paragraph("Finding 4 — The fleet's most stable devices", S["h2"]),
         Paragraph(
-            f"<b>device_014</b> (controller, server_room) recorded <b>zero queued messages, "
-            f"4 reconnections, and has remained continuously online</b> throughout the analysis period. "
+            f"<b>{d['stable_device']['Device ID']}</b> ({d['stable_device']['Device Type']}, {d['stable_device']['Location']}) "
+            f"recorded <b>{int(d['stable_device']['Reconnect Count'])} reconnections</b> "
+            f"and has remained continuously online throughout the analysis period. "
             f"This device's network zone and hardware class should serve as a reference baseline when "
             f"diagnosing instability elsewhere in the fleet. "
-            f"Sensor devices in office_block and warehouse_a similarly show low reconnection counts "
-            f"and consistent telemetry delivery, suggesting their network infrastructure is well-configured.",
+            f"In total, <b>{len(d['reliable'])} device(s)</b> met the stability threshold "
+            f"(2 or fewer reconnections while staying online), "
+            f"suggesting their network infrastructure is well-configured.",
             S["body"]
         ),
         Spacer(1, 4),
@@ -371,7 +437,7 @@ def build_pdf(d: dict, output_path: str):
 
     story.append(Paragraph("<b>Recommended action:</b>", S["h3"]))
     for action in [
-        "Use device_014's network configuration as a template when setting up new device deployments.",
+        f"Use {d['stable_device']['Device ID']}'s network configuration as a template when setting up new device deployments.",
         "Compare AP firmware versions between stable and unstable network zones — a version mismatch may explain the reconnection pattern.",
     ]:
         story.append(Paragraph(f"→ {action}", S["action"]))
@@ -384,19 +450,21 @@ def build_pdf(d: dict, output_path: str):
     action_data = [
         ["Priority", "Action", "Owner", "Timeline"],
         ["P1 — Critical",
-         "Restore connectivity to device_002 (factory_floor_2)\nCurrently offline, 11 reconnects, 32 messages queued",
+         f"Restore connectivity to {wd['Device ID']} ({wd['Location']})\n"
+         f"{int(wd['Reconnect Count'])} reconnects, {int(wd['Queue Depth'])} messages queued, status {wd['Connection Status']}",
          "Network / IT", "Today"],
         ["P1 — Critical",
-         "Inspect camera thermals at factory_floor_2 & server_room\nPeak temperatures >86°C recorded",
+         f"Inspect camera thermals at {d['cam_hot_locs']}\nPeak camera temperature {d['cam_temp_max']}°C recorded",
          "Hardware", "Today"],
         ["P2 — High",
-         "Restore device_004 and device_009 before queue overflow\nCombined 99 messages queued",
+         f"Restore {d['near_capacity_ids']} before queue overflow\nCombined {d['near_capacity_queue']} messages queued",
          "Network / IT", "< 2 hours"],
         ["P2 — High",
-         "Audit APs serving factory_floor_2 and warehouse_b\n6 devices with >8 reconnections in these zones",
+         f"Audit APs serving {', '.join(sorted(d['high_reconnect']['Location'].unique())[:2])}\n"
+         f"{len(d['high_reconnect'])} devices with >8 reconnections across affected zones",
          "Network", "This week"],
         ["P3 — Medium",
-         "Review camera CPU load and video processing settings\nSustained 65% CPU on all 5 camera devices",
+         f"Review camera CPU load and video processing settings\nSustained ~{d['cam_cpu']}% CPU on all {d['camera_count']} camera devices",
          "Firmware", "This sprint"],
         ["P3 — Medium",
          "Increase max_queue_size for devices in problem zones",
