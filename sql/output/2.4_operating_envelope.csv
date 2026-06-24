@@ -1,0 +1,10 @@
+torque_band,speed_band,reading_count,failure_count,failure_rate_pct
+High (>50 Nm),Normal (1400–1700),927,78.0,8.41
+Low (<30 Nm),High (>1700),288,23.0,7.99
+Normal (30–50 Nm),Low (<1400),1564,117.0,7.48
+High (>50 Nm),Low (<1400),347,25.0,7.2
+Normal (30–50 Nm),Normal (1400–1700),4071,292.0,7.17
+Low (<30 Nm),Low (<1400),368,26.0,7.07
+Low (<30 Nm),Normal (1400–1700),937,63.0,6.72
+Normal (30–50 Nm),High (>1700),1223,75.0,6.13
+High (>50 Nm),High (>1700),275,16.0,5.82

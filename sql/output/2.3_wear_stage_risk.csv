@@ -1,0 +1,4 @@
+wear_stage,readings,failures,failure_rate_pct,avg_torque,avg_wear_min
+early,3129,196.0,6.26,40.1,40.0
+mid,3599,200.0,5.56,39.8,125.0
+late,3272,319.0,9.75,39.9,211.0

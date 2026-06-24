@@ -1,0 +1,4 @@
+machine_type,total_readings,failure_count,failure_rate_pct,avg_torque_nm,avg_speed_rpm,avg_tool_wear_min
+H,2021,154.0,7.62,40.0,1535.0,127.0
+L,4960,349.0,7.04,40.1,1537.0,128.0
+M,3019,212.0,7.02,39.7,1537.0,126.0

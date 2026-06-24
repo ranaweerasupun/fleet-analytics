@@ -1,0 +1,14 @@
+location,device_type,total_readings,anomaly_count,anomaly_rate_pct
+office_block,sensor,360,12.0,3.33
+warehouse_b,sensor,360,8.0,2.22
+warehouse_b,camera,360,7.0,1.94
+factory_floor_2,sensor,720,14.0,1.94
+loading_bay,gateway,360,7.0,1.94
+loading_bay,sensor,360,7.0,1.94
+warehouse_a,gateway,720,13.0,1.81
+factory_floor_2,camera,360,6.0,1.67
+warehouse_a,camera,360,6.0,1.67
+server_room,controller,360,6.0,1.67
+server_room,camera,360,5.0,1.39
+warehouse_a,sensor,360,4.0,1.11
+factory_floor_1,camera,360,4.0,1.11

@@ -1,0 +1,16 @@
+device_id,device_type,location,connection_status,avg_cpu,max_cpu,avg_temp,anomaly_count,reconnect_count,health_score,reliability_tier,health_rank
+device_007,sensor,warehouse_a,Online,8.7,50.9,42.3,4.0,4,86.0,Tier 1 — Healthy,1
+device_005,gateway,warehouse_a,Online,28.2,62.2,52.3,7.0,3,83.5,Tier 2 — Monitor,2
+device_014,controller,server_room,Online,18.8,51.3,48.4,6.0,4,83.0,Tier 2 — Monitor,3
+device_001,gateway,warehouse_a,Online,28.4,67.0,52.2,6.0,6,79.0,Tier 2 — Monitor,4
+device_011,camera,factory_floor_1,Online,65.4,97.5,61.3,4.0,3,73.0,Tier 2 — Monitor,5
+device_010,camera,warehouse_a,Online,65.3,99.0,61.3,6.0,2,72.0,Tier 2 — Monitor,6
+device_008,gateway,loading_bay,Online,28.6,70.9,52.1,7.0,12,69.5,Tier 3 — At Risk,7
+device_015,sensor,loading_bay,Online,8.8,48.2,42.7,7.0,10,69.5,Tier 3 — At Risk,7
+device_013,sensor,factory_floor_2,Online,9.2,44.2,42.6,9.0,11,66.5,Tier 3 — At Risk,9
+device_006,sensor,factory_floor_2,Offline,8.4,41.2,42.3,5.0,4,64.5,Tier 3 — At Risk,10
+device_012,camera,server_room,Online,65.2,99.0,61.4,5.0,11,57.5,Tier 3 — At Risk,11
+device_009,sensor,office_block,Offline,9.0,47.9,42.8,12.0,3,56.0,Tier 3 — At Risk,12
+device_003,sensor,warehouse_b,Offline,8.9,48.9,42.5,8.0,11,48.0,Tier 4 — Critical,13
+device_004,camera,warehouse_b,Offline,65.7,96.2,61.5,7.0,5,44.5,Tier 4 — Critical,14
+device_002,camera,factory_floor_2,Offline,65.5,94.2,61.2,6.0,11,36.0,Tier 4 — Critical,15

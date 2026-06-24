@@ -1,0 +1,2 @@
+total_devices,online_devices,offline_devices,fleet_uptime_pct,avg_cpu_pct,avg_temp_c,max_temp_c,total_anomalies,anomaly_rate_pct
+15,10,5,66.7,32.3,51.1,88.3,99.0,1.83

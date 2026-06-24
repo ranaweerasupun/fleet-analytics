@@ -1,0 +1,16 @@
+device_id,device_type,location,connection_status,reading_count,avg_cpu_pct,max_cpu_pct,avg_temp_c,max_temp_c,avg_signal_dbm,anomaly_count,reconnect_count,queue_depth
+device_009,sensor,office_block,Offline,360,9.0,47.9,42.8,65.7,-62.0,12.0,3,49
+device_013,sensor,factory_floor_2,Online,360,9.2,44.2,42.6,64.7,-62.0,9.0,11,19
+device_003,sensor,warehouse_b,Offline,360,8.9,48.9,42.5,62.7,-62.0,8.0,11,6
+device_004,camera,warehouse_b,Offline,360,65.7,96.2,61.5,81.9,-58.0,7.0,5,50
+device_008,gateway,loading_bay,Online,360,28.6,70.9,52.1,76.3,-55.0,7.0,12,23
+device_005,gateway,warehouse_a,Online,360,28.2,62.2,52.3,77.0,-55.0,7.0,3,29
+device_015,sensor,loading_bay,Online,360,8.8,48.2,42.7,65.3,-62.0,7.0,10,20
+device_002,camera,factory_floor_2,Offline,360,65.5,94.2,61.2,88.3,-58.0,6.0,11,32
+device_010,camera,warehouse_a,Online,360,65.3,99.0,61.3,85.0,-58.0,6.0,2,21
+device_001,gateway,warehouse_a,Online,360,28.4,67.0,52.2,75.8,-55.0,6.0,6,41
+device_014,controller,server_room,Online,360,18.8,51.3,48.4,69.5,-60.0,6.0,4,0
+device_012,camera,server_room,Online,360,65.2,99.0,61.4,87.0,-58.0,5.0,11,33
+device_006,sensor,factory_floor_2,Offline,360,8.4,41.2,42.3,67.2,-62.0,5.0,4,24
+device_011,camera,factory_floor_1,Online,360,65.4,97.5,61.3,83.3,-58.0,4.0,3,37
+device_007,sensor,warehouse_a,Online,360,8.7,50.9,42.3,62.0,-62.0,4.0,4,30

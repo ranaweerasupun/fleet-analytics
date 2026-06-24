@@ -1,0 +1,16 @@
+risk_rank,udi,product_id,machine_type,tool_wear_min,torque_nm,power_w,temp_diff_k,risk_score,recommendation
+1,352,L10352,L,250,52.8,9.0,8.4,99.5,Immediate attention
+1,1304,H11304,H,250,54.5,8.0,7.8,99.5,Immediate attention
+1,5130,M15130,M,250,52.1,9.0,8.4,99.5,Immediate attention
+4,6539,L16539,L,247,57.3,9.0,7.7,99.1,Immediate attention
+5,3155,H13155,H,246,51.7,8.0,8.3,98.9,Immediate attention
+6,3244,L13244,L,245,51.2,9.0,8.0,98.7,Immediate attention
+7,3758,M13758,M,244,50.4,9.0,8.5,98.6,Immediate attention
+8,3349,H13349,H,241,59.6,9.0,8.0,98.1,Immediate attention
+9,60,L10060,L,240,56.9,7.0,8.5,97.9,Immediate attention
+10,7748,L17748,L,239,54.0,10.0,7.2,97.8,Immediate attention
+11,2328,L12328,L,238,54.0,7.0,7.6,97.6,Immediate attention
+12,3513,L13513,L,234,55.9,9.0,8.3,97.0,Immediate attention
+13,4912,M14912,M,232,55.6,9.0,8.1,96.7,Immediate attention
+14,2101,L12101,L,223,62.4,9.0,8.3,95.3,Immediate attention
+15,1464,L11464,L,220,60.6,8.0,8.5,94.8,Immediate attention

@@ -1,0 +1,16 @@
+device_id,device_type,location,timestamp,cpu_pct,prev_cpu,cpu_delta,temperature_c,temp_delta,spike_type
+device_008,gateway,loading_bay,2026-05-25 11:02:03.718141,70.9,26.7,44.2,65.25,12.48,CPU spike
+device_008,gateway,loading_bay,2026-05-25 12:42:03.718141,67.5,23.9,43.6,67.92,17.29,CPU spike
+device_008,gateway,loading_bay,2026-05-25 10:28:03.718141,63.5,20.0,43.5,70.61,22.26,CPU spike
+device_001,gateway,warehouse_a,2026-05-25 14:34:03.718141,60.9,18.9,42.0,74.17,27.27,CPU spike
+device_003,sensor,warehouse_b,2026-05-25 13:28:03.718141,48.9,7.4,41.5,60.8,19.85,CPU spike
+device_011,camera,factory_floor_1,2026-05-25 14:24:03.718141,97.5,56.7,40.8,83.32,24.61,CPU spike
+device_007,sensor,warehouse_a,2026-05-25 09:30:03.718141,50.9,10.8,40.1,59.59,20.5,CPU spike
+device_013,sensor,factory_floor_2,2026-05-25 10:05:03.718141,44.2,4.8,39.4,61.81,23.42,CPU spike
+device_007,sensor,warehouse_a,2026-05-25 13:36:03.718141,40.0,1.6,38.4,59.48,15.34,CPU spike
+device_003,sensor,warehouse_b,2026-05-25 10:14:03.718141,40.1,1.8,38.3,62.67,20.34,CPU spike
+device_010,camera,warehouse_a,2026-05-25 13:52:03.718141,95.8,57.7,38.1,84.71,25.1,CPU spike
+device_003,sensor,warehouse_b,2026-05-25 13:34:03.718141,46.4,8.5,37.9,58.07,13.95,CPU spike
+device_012,camera,server_room,2026-05-25 14:17:03.718141,99.0,61.1,37.9,77.87,19.48,CPU spike
+device_015,sensor,loading_bay,2026-05-25 11:52:03.718141,48.2,10.4,37.8,59.01,19.56,CPU spike
+device_009,sensor,office_block,2026-05-25 12:45:03.718141,42.1,4.4,37.7,62.12,22.86,CPU spike

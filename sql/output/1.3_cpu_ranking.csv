@@ -1,0 +1,16 @@
+device_id,device_type,location,avg_cpu_pct,rank_in_location,fleet_rank
+device_011,camera,factory_floor_1,65.4,1,3
+device_002,camera,factory_floor_2,65.5,1,2
+device_013,sensor,factory_floor_2,9.2,2,10
+device_006,sensor,factory_floor_2,8.4,3,15
+device_008,gateway,loading_bay,28.6,1,6
+device_015,sensor,loading_bay,8.8,2,13
+device_009,sensor,office_block,9.0,1,11
+device_012,camera,server_room,65.2,1,5
+device_014,controller,server_room,18.8,2,9
+device_010,camera,warehouse_a,65.3,1,4
+device_001,gateway,warehouse_a,28.4,2,7
+device_005,gateway,warehouse_a,28.2,3,8
+device_007,sensor,warehouse_a,8.7,4,14
+device_004,camera,warehouse_b,65.7,1,1
+device_003,sensor,warehouse_b,8.9,2,12
