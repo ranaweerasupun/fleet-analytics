@@ -145,11 +145,11 @@ fleet-analytics/
 
 ## Tech stack used:
 
->**Language & analysis:** Python, pandas, NumPy, scikit-learn, SciPy
->**SQL:** DuckDB (window functions, CTEs, analytical queries)
->**Data store & messaging:** InfluxDB, MQTT (Mosquitto)
->**Reporting & BI:** ReportLab (PDF), Power BI (CSV exports), Matplotlib
->**Infrastructure:** Docker Compose, Grafana
+- **Language & analysis:** Python, pandas, NumPy, scikit-learn, SciPy
+- **SQL:** DuckDB (window functions, CTEs, analytical queries)
+- **Data store & messaging:** InfluxDB, MQTT (Mosquitto)
+- **Reporting & BI:** ReportLab (PDF), Power BI (CSV exports), Matplotlib
+- **Infrastructure:** Docker Compose, Grafana
 
 ---
 
